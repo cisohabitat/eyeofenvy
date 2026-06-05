@@ -12,6 +12,7 @@ import {
 import { Level } from '../dungeon/level';
 import { CELL_SIZE, WALL_HEIGHT } from './constants';
 import { cellToWorld } from './cameraRig';
+import { Disposables } from './disposables';
 
 /** Soft radial sprite, generated at runtime so we ship zero binary assets. */
 function makeFlareTexture(scene: Scene): DynamicTexture {
@@ -40,14 +41,21 @@ interface Flicker {
  * warm point light that follows the party (their carried torch), and wall
  * sconces with flickering point lights + procedural fire particles.
  */
-export function setupLighting(scene: Scene, level: Level, camera: UniversalCamera): void {
+export function setupLighting(
+  scene: Scene,
+  level: Level,
+  camera: UniversalCamera,
+  bin: Disposables,
+): void {
   const ambient = new HemisphericLight('ambient', new Vector3(0, 1, 0), scene);
   ambient.intensity = 0.18;
   ambient.diffuse = new Color3(0.4, 0.45, 0.6);
   ambient.groundColor = new Color3(0.05, 0.05, 0.08);
+  bin.addDisposable(ambient);
 
   const flickers: Flicker[] = [];
   const flare = makeFlareTexture(scene);
+  bin.addDisposable(flare);
 
   // Party torch: a warm point light riding the camera.
   const partyTorch = new PointLight('party-torch', camera.position.clone(), scene);
@@ -55,6 +63,7 @@ export function setupLighting(scene: Scene, level: Level, camera: UniversalCamer
   partyTorch.intensity = 0.9;
   partyTorch.range = CELL_SIZE * 5;
   flickers.push({ light: partyTorch, base: 0.9, phase: 0 });
+  bin.addDisposable(partyTorch);
 
   // Wall sconces from the level data.
   for (const t of level.objects().torches) {
@@ -68,11 +77,12 @@ export function setupLighting(scene: Scene, level: Level, camera: UniversalCamer
     light.intensity = 0.85;
     light.range = CELL_SIZE * 4.5;
     flickers.push({ light, base: 0.85, phase: Math.random() * Math.PI * 2 });
+    bin.addDisposable(light);
 
-    spawnFire(scene, flare, pos);
+    bin.addDisposable(spawnFire(scene, flare, pos));
   }
 
-  scene.onBeforeRenderObservable.add(() => {
+  const obs = scene.onBeforeRenderObservable.add(() => {
     partyTorch.position.copyFrom(camera.position);
     const t = performance.now() / 1000;
     for (const f of flickers) {
@@ -81,6 +91,7 @@ export function setupLighting(scene: Scene, level: Level, camera: UniversalCamer
       f.light.intensity = f.base * (0.82 + 0.18 * (n * 0.5 + 0.5));
     }
   });
+  bin.add(() => scene.onBeforeRenderObservable.remove(obs));
 }
 
 /** Direction (unit-ish) from a wall cell toward an adjacent walkable cell. */
@@ -97,7 +108,7 @@ function floorNeighborOffset(level: Level, x: number, z: number): { x: number; z
   return { x: 0, z: 0 };
 }
 
-function spawnFire(scene: Scene, texture: DynamicTexture, pos: Vector3): void {
+function spawnFire(scene: Scene, texture: DynamicTexture, pos: Vector3): ParticleSystem {
   const fire = new ParticleSystem(`fire-${pos.x}-${pos.z}`, 120, scene);
   fire.particleTexture = texture;
   fire.emitter = pos.clone();
@@ -119,4 +130,5 @@ function spawnFire(scene: Scene, texture: DynamicTexture, pos: Vector3): void {
   fire.maxEmitPower = 0.9;
   fire.updateSpeed = 0.01;
   fire.start();
+  return fire;
 }

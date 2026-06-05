@@ -1,8 +1,8 @@
 import { Party, HandSide } from '../entities/party';
 
 /**
- * Backpack panel. Click a weapon to equip it; choose which hand via the small
- * L/R buttons. Toggled with the Backpack button or the 'I' key.
+ * Backpack panel. Equip weapons to a hand (L/R buttons) or drink potions (Use).
+ * Toggled with the Backpack button or the 'I' key.
  */
 export class Inventory {
   private readonly panel = document.getElementById('inventory')!;
@@ -11,6 +11,7 @@ export class Inventory {
   constructor(
     private readonly party: Party,
     private readonly onChanged: () => void,
+    private readonly onLog: (msg: string) => void,
   ) {
     this.toggleBtn.addEventListener('click', () => this.toggle());
     this.render();
@@ -34,20 +35,36 @@ export class Inventory {
       this.panel.appendChild(empty);
       return;
     }
-    this.party.backpack.forEach((w, i) => {
+    this.party.backpack.forEach((item, i) => {
       const row = document.createElement('div');
       row.className = 'inv-row';
-      row.innerHTML = `<span>${w.name} <em>atk ${w.attack}</em></span>`;
-      for (const side of ['left', 'right'] as HandSide[]) {
-        const btn = document.createElement('button');
-        btn.textContent = side === 'left' ? 'L' : 'R';
-        btn.title = `Equip to ${side} hand`;
-        btn.addEventListener('click', () => {
-          this.party.equip(i, side);
+      const detail =
+        item.kind === 'potion' ? `heal ${item.heal}` : `atk ${item.attack}`;
+      row.innerHTML = `<span>${item.name} <em>${detail}</em></span>`;
+
+      if (item.kind === 'potion') {
+        const use = document.createElement('button');
+        use.textContent = 'Use';
+        use.title = 'Drink the potion';
+        use.addEventListener('click', () => {
+          const restored = this.party.usePotion(i);
+          this.onLog(`The party drinks ${item.name}, restoring ${restored} HP.`);
           this.render();
           this.onChanged();
         });
-        row.appendChild(btn);
+        row.appendChild(use);
+      } else {
+        for (const side of ['left', 'right'] as HandSide[]) {
+          const btn = document.createElement('button');
+          btn.textContent = side === 'left' ? 'L' : 'R';
+          btn.title = `Equip to ${side} hand`;
+          btn.addEventListener('click', () => {
+            this.party.equip(i, side);
+            this.render();
+            this.onChanged();
+          });
+          row.appendChild(btn);
+        }
       }
       this.panel.appendChild(row);
     });

@@ -37,30 +37,42 @@ npm run lint       # ESLint
 | Turn 90° | `Q` / `E` (or `←` `→`) |
 | Use / interact (levers, doors) | `Space` |
 | Attack ahead (right hand) | `F` (or click a hand) |
+| Use / descend stairs | `Space` (on a stair tile) |
 | Backpack | `I` (or the Backpack button) |
+| Save game | `K` |
+| Load game | `L` |
 
 On-screen movement/attack buttons are also provided.
 
-## The vertical slice
+## What's playable
 
 Start in a sealed antechamber. A lever in the wall opens the only door —
-face it and press `Space`. Beyond lies a room with a kobold and a better
-weapon on the floor. Walk over the weapon to pick it up, equip it from the
-backpack (`I`), and cut the creature down. The minimap reveals as you explore.
+face it and press `Space`. Beyond lies a room with kobolds, a weapon, and a
+healing potion on the floor. Walk over loot to pick it up; open the backpack
+(`I`) to equip weapons (L/R hand) or drink potions (Use). A glowing **stair**
+in the corner descends to a second floor, *The Coiled Vault* — step onto it
+and press `Space`.
+
+Floors **remember their state**: doors you opened, loot you took, monsters you
+slew, and the tiles you mapped all persist when you travel between levels.
+Press `K` to save to the browser and `L` to reload — the full run (position,
+party HP, inventory, and every floor's memory) is restored.
 
 ## Project layout
 
 ```
 src/
-  engine/        Babylon scene, camera rig, lighting, constants
-  dungeon/       grid types, level loader, mesh builder
+  game.ts        orchestrator: floor lifecycle, transitions, save/load
+  engine/        Babylon scene, camera rig, lighting, constants, disposables
+  dungeon/       grid types, level loader (stairs/doors), mesh builder
   movement/      grid movement controller (tweened, collision)
-  entities/      party, monsters + AI
+  entities/      party (weapons/potions), monsters + AI
   combat/        pure combat math (unit-tested)
   interactions/  levers, doors, item pickups
+  state/         per-level memory + save-state serialization
   ui/            HUD, minimap, inventory, styles
   audio/         Web Audio SFX synth
-  data/levels/   authored level JSON
+  data/levels/   authored level JSON (level01, level02)
 test/            Vitest specs
 ```
 
@@ -68,6 +80,5 @@ test/            Vitest specs
 
 - Character creation, classes, stats, leveling; per-character combat
 - Spell system (memorized spells, scrolls), more item/equipment types
-- Multiple connected levels, stairs, secret doors, traps
-- Save/load via `localStorage`; automap persistence
+- Secret doors, pressure plates, traps; deeper level network
 - Authored glTF monster/prop art; optional React inventory/character screens

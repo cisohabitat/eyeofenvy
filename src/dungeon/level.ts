@@ -1,4 +1,4 @@
-import { LevelData, Tile, cellKey } from './types';
+import { LevelData, StairDef, Tile, cellKey } from './types';
 
 /**
  * Runtime wrapper over authored LevelData. Owns the grid + mutable door state
@@ -15,15 +15,36 @@ export class Level {
   private readonly doorAt = new Map<string, string>();
   /** "x,z" of cells currently occupied by a living monster (blocks the party) */
   private readonly blocked = new Set<string>();
+  /** "x,z" -> stair, for quick lookup when the party stands on one */
+  private readonly stairAtCell = new Map<string, StairDef>();
 
-  constructor(readonly data: LevelData) {
+  /**
+   * @param data    authored level
+   * @param openDoors door ids that should start open (restored from memory)
+   */
+  constructor(
+    readonly data: LevelData,
+    openDoors?: Iterable<string>,
+  ) {
     this.grid = data.rows.map((row) => row.split(''));
     this.height = this.grid.length;
     this.width = this.grid[0]?.length ?? 0;
+    const initiallyOpen = new Set(openDoors ?? []);
     for (const door of data.objects.doors) {
-      this.doorOpen.set(door.id, false);
+      this.doorOpen.set(door.id, initiallyOpen.has(door.id));
       this.doorAt.set(cellKey(door.x, door.z), door.id);
     }
+    for (const stair of data.objects.stairs) {
+      this.stairAtCell.set(cellKey(stair.x, stair.z), stair);
+    }
+  }
+
+  stairAt(x: number, z: number): StairDef | undefined {
+    return this.stairAtCell.get(cellKey(x, z));
+  }
+
+  stairById(id: string): StairDef | undefined {
+    return this.data.objects.stairs.find((s) => s.id === id);
   }
 
   objects(): LevelData['objects'] {

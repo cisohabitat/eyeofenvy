@@ -11,6 +11,8 @@ import {
 import { Level } from './level';
 import { Tile } from './types';
 import { CELL_SIZE, WALL_HEIGHT } from '../engine/constants';
+import { Disposables } from '../engine/disposables';
+import { cellToWorld } from '../engine/cameraRig';
 
 export interface DungeonMeshes {
   doorMeshes: Map<string, Mesh>;
@@ -68,7 +70,7 @@ function doorMaterial(scene: Scene): PBRMaterial {
  * '#' cell, and an animatable mesh per door. Returns handles needed to animate
  * doors at runtime.
  */
-export function buildDungeon(scene: Scene, level: Level): DungeonMeshes {
+export function buildDungeon(scene: Scene, level: Level, bin: Disposables): DungeonMeshes {
   const worldW = level.width * CELL_SIZE;
   const worldH = level.height * CELL_SIZE;
   const cx = ((level.width - 1) * CELL_SIZE) / 2;
@@ -78,11 +80,13 @@ export function buildDungeon(scene: Scene, level: Level): DungeonMeshes {
   const floor = MeshBuilder.CreateGround('floor', { width: worldW, height: worldH }, scene);
   floor.position = new Vector3(cx, 0, cz);
   floor.material = floorMaterial(scene);
+  bin.addDisposable(floor);
 
   const ceiling = MeshBuilder.CreateGround('ceiling', { width: worldW, height: worldH }, scene);
   ceiling.position = new Vector3(cx, WALL_HEIGHT, cz);
   ceiling.rotation.x = Math.PI; // face downward
   ceiling.material = ceilingMaterial(scene);
+  bin.addDisposable(ceiling);
 
   // Wall boxes for every solid cell, merged into one mesh for performance.
   const wallBoxes: Mesh[] = [];
@@ -104,23 +108,52 @@ export function buildDungeon(scene: Scene, level: Level): DungeonMeshes {
     walls.name = 'walls';
     walls.material = wallMaterial(scene);
     walls.checkCollisions = false;
+    bin.addDisposable(walls);
   }
 
-  // Doors — a slab that sinks into the floor when opened.
+  // Doors — a slab that sinks into the floor when opened. Restore open ones.
   const doorMeshes = new Map<string, Mesh>();
   const doorMat = doorMaterial(scene);
+  bin.addDisposable(doorMat);
   for (const d of level.objects().doors) {
     const door = MeshBuilder.CreateBox(
       `door-${d.id}`,
       { width: CELL_SIZE * 0.9, height: WALL_HEIGHT, depth: CELL_SIZE * 0.3 },
       scene,
     );
-    door.position = new Vector3(d.x * CELL_SIZE, WALL_HEIGHT / 2, d.z * CELL_SIZE);
+    const openY = level.isDoorOpen(d.id) ? -WALL_HEIGHT + 0.2 : WALL_HEIGHT / 2;
+    door.position = new Vector3(d.x * CELL_SIZE, openY, d.z * CELL_SIZE);
     door.material = doorMat;
     doorMeshes.set(d.id, door);
+    bin.addDisposable(door);
+  }
+
+  // Stairs — a beveled marker the party steps onto to change floors.
+  const downMat = stairMaterial(scene, 'down', new Color3(0.2, 0.7, 0.9));
+  const upMat = stairMaterial(scene, 'up', new Color3(0.4, 0.85, 0.45));
+  bin.addDisposable(downMat);
+  bin.addDisposable(upMat);
+  for (const s of level.objects().stairs) {
+    const slab = MeshBuilder.CreateCylinder(
+      `stair-${s.id}`,
+      { diameterTop: CELL_SIZE * 0.5, diameterBottom: CELL_SIZE * 0.85, height: 0.3, tessellation: 6 },
+      scene,
+    );
+    slab.position = cellToWorld(s.x, s.z, 0.15);
+    slab.material = s.kind === 'down' ? downMat : upMat;
+    bin.addDisposable(slab);
   }
 
   return { doorMeshes };
+}
+
+function stairMaterial(scene: Scene, kind: string, color: Color3): PBRMaterial {
+  const mat = new PBRMaterial(`stairMat-${kind}`, scene);
+  mat.albedoColor = color.scale(0.3);
+  mat.emissiveColor = color;
+  mat.metallic = 0.2;
+  mat.roughness = 0.4;
+  return mat;
 }
 
 /** Slide a door mesh down (open) or back up (close) over ~0.6s. */

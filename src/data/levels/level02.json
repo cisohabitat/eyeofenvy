@@ -1,0 +1,47 @@
+{
+  "id": "level02",
+  "name": "The Coiled Vault",
+  "rows": [
+    "############",
+    "#..........#",
+    "#.########.#",
+    "#.#......#.#",
+    "#.#.####.#.#",
+    "#.#.#..#.#.#",
+    "#.#.#..#.#.#",
+    "#.#.####.#.#",
+    "#.#......#.#",
+    "#.########.#",
+    "#..........#",
+    "############"
+  ],
+  "start": { "x": 1, "z": 1, "dir": 1 },
+  "objects": {
+    "doors": [],
+    "levers": [],
+    "items": [
+      { "id": "mace1", "name": "Iron Mace", "x": 10, "z": 10, "kind": "weapon", "attack": 9 },
+      { "id": "potion2", "name": "Vial of Vigor", "x": 1, "z": 10, "kind": "potion", "heal": 16 }
+    ],
+    "monsters": [
+      { "id": "m2a", "type": "kobold", "x": 5, "z": 1 },
+      { "id": "m2b", "type": "kobold", "x": 10, "z": 5 }
+    ],
+    "torches": [
+      { "x": 0, "z": 1 },
+      { "x": 11, "z": 5 },
+      { "x": 5, "z": 11 }
+    ],
+    "stairs": [
+      {
+        "id": "up1",
+        "x": 1,
+        "z": 1,
+        "kind": "up",
+        "dir": 1,
+        "targetLevel": "level01",
+        "targetStair": "down1"
+      }
+    ]
+  }
+}

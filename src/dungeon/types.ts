@@ -65,13 +65,32 @@ export interface LeverDef {
   target: string; // door id it toggles
 }
 
+export type ItemKind = 'weapon' | 'potion';
+
 export interface ItemDef {
   id: string;
   name: string;
   x: number;
   z: number;
-  attack: number;
+  kind: ItemKind;
+  /** Weapons: melee power. */
+  attack?: number;
+  /** Potions: hit points restored to each living member. */
+  heal?: number;
   icon?: string;
+}
+
+export interface StairDef {
+  id: string;
+  x: number;
+  z: number;
+  kind: 'down' | 'up';
+  /** Facing to adopt on arrival. */
+  dir: Direction;
+  /** Level id to travel to. */
+  targetLevel: string;
+  /** Stair id on the target level to arrive on. */
+  targetStair: string;
 }
 
 export interface MonsterDef {
@@ -93,6 +112,7 @@ export interface StartPos {
 }
 
 export interface LevelData {
+  id: string;
   name: string;
   /** Each string is one row (z index). Chars: '#' wall, '.' floor, 'D' door. */
   rows: string[];
@@ -103,6 +123,7 @@ export interface LevelData {
     items: ItemDef[];
     monsters: MonsterDef[];
     torches: TorchDef[];
+    stairs: StairDef[];
   };
 }
 
