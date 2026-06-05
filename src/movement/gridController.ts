@@ -43,6 +43,7 @@ export class GridController {
     this.dir = start.dir;
     this.yaw = (start.dir * Math.PI) / 2;
     this.rig.yaw = this.yaw;
+    this.rig.setPosition(start.x, start.z); // place camera (rig is reused across floors)
   }
 
   get isBusy(): boolean {

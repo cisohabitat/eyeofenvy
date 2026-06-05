@@ -1,4 +1,4 @@
-import { ItemDef } from '../dungeon/types';
+import { ItemDef, ItemKind } from '../dungeon/types';
 
 export interface Character {
   name: string;
@@ -12,6 +12,14 @@ export interface Weapon {
   id: string;
   name: string;
   attack: number;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  kind: ItemKind;
+  attack?: number;
+  heal?: number;
 }
 
 const FIST: Weapon = { id: 'fist', name: 'Fist', attack: 3 };
@@ -33,7 +41,14 @@ export class Party {
     right: { ...FIST },
   };
 
-  backpack: Weapon[] = [];
+  backpack: InventoryItem[] = [];
+
+  /** Replace party state in place (used when loading a save). */
+  restore(members: Character[], hands: Record<HandSide, Weapon>, backpack: InventoryItem[]): void {
+    this.members = members.map((m) => ({ ...m }));
+    this.hands = { left: { ...hands.left }, right: { ...hands.right } };
+    this.backpack = backpack.map((i) => ({ ...i }));
+  }
 
   livingMembers(): Character[] {
     return this.members.filter((m) => m.hp > 0);
@@ -58,16 +73,40 @@ export class Party {
   }
 
   addToBackpack(item: ItemDef): void {
-    this.backpack.push({ id: item.id, name: item.name, attack: item.attack });
+    this.backpack.push({
+      id: item.id,
+      name: item.name,
+      kind: item.kind,
+      attack: item.attack,
+      heal: item.heal,
+    });
   }
 
-  /** Move a backpack weapon into a hand, returning the displaced weapon. */
+  /** Move a backpack weapon into a hand; the displaced weapon returns to the pack. */
   equip(index: number, side: HandSide): void {
-    const weapon = this.backpack[index];
-    if (!weapon) return;
+    const item = this.backpack[index];
+    if (!item || item.kind !== 'weapon') return;
     this.backpack.splice(index, 1);
     const previous = this.hands[side];
-    this.hands[side] = weapon;
-    if (previous.id !== 'fist') this.backpack.push(previous);
+    this.hands[side] = { id: item.id, name: item.name, attack: item.attack ?? 0 };
+    if (previous.id !== 'fist') {
+      this.backpack.push({ id: previous.id, name: previous.name, kind: 'weapon', attack: previous.attack });
+    }
+  }
+
+  /** Drink a potion: heal every living member, capped at maxHp. Returns hp restored. */
+  usePotion(index: number): number {
+    const item = this.backpack[index];
+    if (!item || item.kind !== 'potion') return 0;
+    const heal = item.heal ?? 0;
+    let restored = 0;
+    for (const m of this.members) {
+      if (m.hp <= 0) continue;
+      const before = m.hp;
+      m.hp = Math.min(m.maxHp, m.hp + heal);
+      restored += m.hp - before;
+    }
+    this.backpack.splice(index, 1);
+    return restored;
   }
 }

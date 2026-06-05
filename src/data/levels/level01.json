@@ -1,4 +1,5 @@
 {
+  "id": "level01",
   "name": "The Sealed Antechamber",
   "rows": [
     "############",
@@ -19,13 +20,28 @@
     "doors": [{ "id": "door1", "x": 5, "z": 3 }],
     "levers": [{ "id": "lever1", "x": 5, "z": 2, "target": "door1" }],
     "items": [
-      { "id": "sword1", "name": "Rusty Shortsword", "x": 8, "z": 8, "attack": 6 }
+      { "id": "sword1", "name": "Rusty Shortsword", "x": 8, "z": 8, "kind": "weapon", "attack": 6 },
+      { "id": "potion1", "name": "Vial of Mending", "x": 6, "z": 6, "kind": "potion", "heal": 10 }
     ],
-    "monsters": [{ "id": "mon1", "type": "kobold", "x": 8, "z": 4 }],
+    "monsters": [
+      { "id": "mon1", "type": "kobold", "x": 8, "z": 4 },
+      { "id": "mon2", "type": "kobold", "x": 9, "z": 9 }
+    ],
     "torches": [
       { "x": 0, "z": 3 },
       { "x": 11, "z": 5 },
       { "x": 11, "z": 8 }
+    ],
+    "stairs": [
+      {
+        "id": "down1",
+        "x": 10,
+        "z": 9,
+        "kind": "down",
+        "dir": 3,
+        "targetLevel": "level02",
+        "targetStair": "up1"
+      }
     ]
   }
 }

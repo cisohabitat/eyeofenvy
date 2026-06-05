@@ -7,12 +7,13 @@ import { Direction, Tile, cellKey } from '../dungeon/types';
  */
 export class Minimap {
   private readonly ctx: CanvasRenderingContext2D;
-  private readonly revealed = new Set<string>();
   private readonly cell: number;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly level: Level,
+    /** Revealed-cell set, owned by per-level memory so it persists. */
+    private readonly revealed: Set<string>,
   ) {
     this.ctx = canvas.getContext('2d')!;
     this.cell = Math.floor(Math.min(canvas.width, canvas.height) / Math.max(level.width, level.height));

@@ -10,6 +10,7 @@ import {
 } from '../src/dungeon/types';
 
 const testLevel: LevelData = {
+  id: 'test',
   name: 'Test',
   rows: [
     '#####',
@@ -24,6 +25,9 @@ const testLevel: LevelData = {
     items: [],
     monsters: [],
     torches: [],
+    stairs: [
+      { id: 's1', x: 2, z: 2, kind: 'down', dir: Direction.North, targetLevel: 'l2', targetStair: 'u1' },
+    ],
   },
 };
 
@@ -62,5 +66,20 @@ describe('Level passability', () => {
     expect(level.isPassable(2, 1)).toBe(false);
     level.setBlocked(2, 1, false);
     expect(level.isPassable(2, 1)).toBe(true);
+  });
+});
+
+describe('Level stairs and door restore', () => {
+  it('finds stairs by cell and by id', () => {
+    const level = new Level(testLevel);
+    expect(level.stairAt(2, 2)?.id).toBe('s1');
+    expect(level.stairAt(0, 0)).toBeUndefined();
+    expect(level.stairById('s1')?.targetLevel).toBe('l2');
+  });
+
+  it('starts doors open when restored from memory', () => {
+    const level = new Level(testLevel, ['d1']);
+    expect(level.isDoorOpen('d1')).toBe(true);
+    expect(level.isWalkable(3, 1)).toBe(true);
   });
 });

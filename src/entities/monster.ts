@@ -4,6 +4,7 @@ import { CELL_SIZE } from '../engine/constants';
 import { cellToWorld } from '../engine/cameraRig';
 import { Party } from './party';
 import { applyDamage, computeDamage, isAdjacent, Cooldown } from '../combat/combat';
+import { LevelMemory } from '../state/levelState';
 
 const MONSTER_STATS: Record<string, { hp: number; attack: number; color: Color3 }> = {
   kobold: { hp: 16, attack: 5, color: new Color3(0.85, 0.15, 0.12) },
@@ -110,11 +111,13 @@ export class MonsterManager {
     scene: Scene,
     private readonly level: Level,
     private readonly party: Party,
+    private readonly memory: LevelMemory,
     private readonly getPlayer: () => { x: number; z: number },
     private readonly onLog: (msg: string) => void,
     private readonly onPartyChanged: () => void,
   ) {
     for (const m of level.objects().monsters) {
+      if (this.memory.deadMonsters.has(m.id)) continue; // already slain on this floor
       const mon = new Monster(scene, m.id, m.type, m.x, m.z);
       this.level.setBlocked(m.x, m.z, true);
       this.monsters.push(mon);
@@ -149,9 +152,16 @@ export class MonsterManager {
     const { dead } = applyDamage(mon, dmg);
     if (dead) {
       this.level.setBlocked(mon.x, mon.z, false);
+      this.memory.deadMonsters.add(mon.id);
       mon.dispose();
       this.monsters = this.monsters.filter((m) => m !== mon);
     }
     return { hit: true, killed: dead, dmg };
+  }
+
+  /** Tear down all monster meshes when the floor is unloaded. */
+  dispose(): void {
+    for (const mon of this.monsters) mon.dispose();
+    this.monsters = [];
   }
 }
