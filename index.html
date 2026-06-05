@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eye of Envy</title>
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="renderCanvas"></canvas>
+
+      <!-- DOM HUD overlay rendered above the 3D canvas -->
+      <div id="hud" class="hidden">
+        <div id="minimap-wrap">
+          <canvas id="minimap" width="180" height="180"></canvas>
+        </div>
+
+        <div id="messages"></div>
+
+        <div id="bottom-bar">
+          <div id="party"></div>
+          <div id="hands">
+            <button class="hand" data-hand="left">
+              <span class="hand-label">Left</span>
+              <span class="hand-item">—</span>
+            </button>
+            <button class="hand" data-hand="right">
+              <span class="hand-label">Right</span>
+              <span class="hand-item">Fist</span>
+            </button>
+          </div>
+          <div id="compass">N</div>
+        </div>
+
+        <!-- On-screen movement pad (keyboard also works) -->
+        <div id="move-pad">
+          <button data-move="turnLeft" title="Turn left (Q)">⟲</button>
+          <button data-move="forward" title="Forward (W / ↑)">▲</button>
+          <button data-move="turnRight" title="Turn right (E)">⟳</button>
+          <button data-move="strafeLeft" title="Strafe left (A)">◀</button>
+          <button data-move="back" title="Back (S / ↓)">▼</button>
+          <button data-move="strafeRight" title="Strafe right (D)">▶</button>
+        </div>
+
+        <button id="inv-toggle" title="Inventory (I)">Backpack</button>
+        <div id="inventory" class="hidden"></div>
+      </div>
+
+      <!-- Title / start overlay -->
+      <div id="title-screen">
+        <h1>EYE OF ENVY</h1>
+        <p class="tagline">A descent in the spirit of the old grid-crawlers.</p>
+        <button id="start-btn">Enter the Dungeon</button>
+        <ul class="controls">
+          <li><b>W A S D</b> move &amp; strafe · <b>Q E</b> turn · <b>↑↓←→</b> also move</li>
+          <li><b>Space</b> use / interact · <b>F</b> attack · <b>I</b> backpack</li>
+        </ul>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
